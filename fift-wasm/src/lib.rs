@@ -72,7 +72,11 @@ impl FiftState {
 
         let context = fift::Context::new(env_writer_ref, output_writer_ref)
             .with_basic_modules()
-            .handle_error()?;
+            .handle_error()?
+            .with_limits(fift::core::ExecutionLimits {
+                max_steps: Some(10_000_000),
+                max_include_depth: Some(100),
+            });
 
         Ok(FiftState {
             context,
