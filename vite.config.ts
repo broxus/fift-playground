@@ -13,7 +13,11 @@ export default defineConfig({
   publicDir: path.resolve(__dirname, 'public'),
   resolve: {
     alias: {
+      path: 'path-browserify',
       '@fift': path.resolve(__dirname, 'fift-wasm/pkg')
     }
+  },
+  optimizeDeps: {
+    include: ['path-browserify', 'onigasm', 'typescript', 'monaco-editor-core/esm/vs/editor/editor.worker']
   }
 });

@@ -1,7 +1,6 @@
 import { reactive } from 'vue';
 import type { editor } from 'monaco-editor-core';
 
-// import { useFift } from './providers/useFift';
 import { atou, utoa } from './util';
 
 const DEFAULT_MAIN_FILE = 'main.fif';
@@ -47,17 +46,25 @@ export interface Store {
   renameFile: (oldFilename: string, newFilename: string) => void;
 }
 
+export interface StoreOptions {
+  serializedState?: string;
+  showOutput?: boolean;
+}
+
 export class ReplStore implements Store {
   state: StoreState;
   initialShowOutput: boolean;
 
-  constructor(serializedState = '', showOutput = false) {
+  constructor({ serializedState = '', showOutput = false }: StoreOptions = {}) {
     const files: StoreState['files'] = {};
 
+    let includeStdlib = true;
     if (serializedState) {
       const saved = JSON.parse(atou(serializedState));
-      for (const filename in saved) {
-        setFile(files, filename, saved[filename]);
+      includeStdlib = saved['l'] === false;
+      const savedFiles = saved['f'];
+      for (const filename in savedFiles) {
+        setFile(files, filename, savedFiles[filename]);
       }
     } else {
       setFile(files, DEFAULT_MAIN_FILE, WELCOME_CODE);
@@ -135,13 +142,14 @@ export class ReplStore implements Store {
     if (this.state.mainFile === oldFilename) {
       this.state.mainFile = newFilename;
     }
-
-    // TODO: compile
   }
 
   serialize(): string {
-    const files = this.getFiles();
-    return '#' + utoa(JSON.stringify(files));
+    const state = {
+      l: this.state.includeStdlib,
+      f: this.getFiles()
+    };
+    return '#' + utoa(JSON.stringify(state));
   }
 
   getFiles(): Record<string, string> {

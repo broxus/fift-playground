@@ -22,7 +22,6 @@ library TonUtil // TON Blockchain Fift Library
 } : load-keypair
 // ( fname -- pubkey privkey )
 { dup file-exists?
-  ."ASD" .s
   { load-keypair }
   { dup newkeypair swap rot over swap B>file
     rot ."Saved new private key to file " type cr

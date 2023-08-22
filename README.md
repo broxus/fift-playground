@@ -1,40 +1,54 @@
-# fift-playground
+# Fift Playground
 
-This template should help get you started developing with Vue 3 in Vite.
+## About
 
-## Recommended IDE Setup
+A simple browser REPL for [`fift`](https://github.com/broxus/fift).
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## Usage
 
-## Type Support for `.vue` Imports in TS
+### Local Development
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+This website is built using `Vue` and `Rust`.
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+### Prerequisites
 
-1. Disable the built-in TypeScript Extension
-    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+- Rust 1.70+ with installed target `wasm32-unknown-unknown`
+- wasm-pack
+- binaryen 99+ (for `wasm-opt`)
+- Node.js 18+
 
-## Customize configuration
+### Installation
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
+git clone https://github.com/Rexagon/fift-playground.git
+cd everscale-web-tools
 npm install
+npm run wasm
 ```
 
-### Compile and Hot-Reload for Development
+### Run
 
-```sh
+```
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+This command starts a local development server and opens up a browser window (http://localhost:5173).
+Most changes are reflected live without having to restart the server.
 
-```sh
+### Build
+
+```bash
 npm run build
 ```
+
+This command generates static content into the `dist` directory and can be served using any static contents hosting service.
+
+## Contributing
+
+We welcome contributions to the project! If you notice any issues or errors, feel free to open an issue or submit a pull request.
+
+## License
+
+Licensed under GNU Lesser General Public License v2.1 ([/cli/LICENSE](./cli/LICENSE) or <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>)
+
+Uses a modified version of [original fift libraries](https://github.com/ton-blockchain/ton/tree/master/crypto/fift/lib) ([LGPL-2.1](./fift-wasm/src/lib/LICENSE)).

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { provide, watchEffect } from 'vue'
 
 import { ReplStore } from './store';
 
@@ -7,10 +7,17 @@ import SplitPane from './SplitPane.vue';
 import EditorContainer from './EditorContainer.vue';
 import Output from './Output.vue';
 
-const store = new ReplStore();
+const query = new URLSearchParams(location.search);
+
+const store = new ReplStore({
+  serializedState: location.hash.slice(1),
+  showOutput: query.has('so'),
+});
 store.init();
 
 provide('store', store);
+
+watchEffect(() => history.replaceState({}, '', store.serialize()));
 </script>
 
 <template>

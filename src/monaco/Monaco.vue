@@ -1,10 +1,14 @@
 <script lang="ts" setup>
 import { watch, computed, inject, onMounted, onBeforeUnmount, ref, shallowRef } from 'vue';
 import * as monaco from 'monaco-editor-core'
+import { Registry } from 'monaco-textmate';
+import { wireTmGrammars } from 'monaco-editor-textmate';
 
 import { Store } from '../store';
 import { initMonaco } from './env';
 import { getOrCreateModel } from './utils';
+
+import fiftGrammar from './fift.tmLanguage.json';
 
 const props = withDefaults(
   defineProps<{
@@ -34,7 +38,7 @@ onMounted(async () => {
 
   const editorInstance = monaco.editor.create(containerRef.value, {
     ...(props.readonly
-      ? { value: props.value, language: lang.value }
+      ? { value: props.value, language: lang.value, wordWrap: 'on' }
       : { model: null }),
     fontSize: 13,
     readOnly: props.readonly,
@@ -47,7 +51,7 @@ onMounted(async () => {
       enabled: false,
     },
     fixedOverflowWidgets: true,
-    theme: 'vs-dark'
+    theme: 'vs-dark',
   })
   editor.value = editorInstance;
 
@@ -94,6 +98,19 @@ onMounted(async () => {
       { immediate: true }
     )
   }
+
+  const registry = new Registry({
+    getGrammarDefinition: async _ => {
+      return {
+        format: 'json',
+        content: fiftGrammar
+      };
+    }
+  });
+
+  const grammars = new Map();
+  grammars.set('fift', 'source.fif');
+  await wireTmGrammars(monaco as any, registry, grammars, editorInstance as any);
 
   editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
     // ignore save event

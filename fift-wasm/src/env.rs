@@ -47,7 +47,7 @@ impl fift::core::Environment for WasmEnvironment {
                 if offset >= data.len() as u64 || offset + len > data.len() as u64 {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::UnexpectedEof,
-                        format!("Offset out of range"),
+                        "Offset out of range",
                     ));
                 }
 
@@ -100,7 +100,7 @@ macro_rules! define_libs {
     ]};
 }
 
-const LIBRARIES: &'static [(&'static str, &'static [u8])] = define_libs! {
+const LIBRARIES: &[(&str, &[u8])] = define_libs! {
     "Asm.fif" => "lib/Asm.fif",
     "Color.fif" => "lib/Color.fif",
     "Fift.fif" => "lib/Fift.fif",

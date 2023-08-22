@@ -3,6 +3,7 @@ import { inject, ref, watchEffect } from 'vue';
 import * as monaco from 'monaco-editor-core';
 import * as fift from '@fift'
 
+import Monaco from './monaco/Monaco.vue';
 import { useFift } from './providers/useFift'
 import { Store } from './store';
 
@@ -39,6 +40,10 @@ watchEffect(() => {
   }
 
   const activeFile = store.state.activeFile;
+  if (activeFile == null) {
+    return;
+  }
+
   const uri = monaco.Uri.parse(`file:///${activeFile.filename}`);
   const model = monaco.editor.getModel(uri);
 
@@ -97,8 +102,8 @@ watchEffect(() => {
   </div>
 
   <div class="output-container">
-    <pre class="stdout" v-show="selectedTab === 'stdout'">{{ state.stdout }}</pre>
-    <pre class="stderr" v-show="selectedTab === 'stderr'">{{ state.stderr }}</pre>
+    <Monaco class="stdout" v-show="selectedTab === 'stdout'" readonly filename="stdout" :value="state.stdout" />
+    <Monaco class="stderr" v-show="selectedTab === 'stderr'" readonly filename="stderr" :value="state.stderr" />
     <ol class="backtrace" v-show="selectedTab === 'backtrace'">
       <li v-for="item of state.backtrace">{{ item }}</li>
     </ol>
@@ -151,11 +156,7 @@ button.active {
 
 .stdout,
 .stderr {
-  margin: 1em;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  max-height: 100%;
+  height: 100%;
 }
 
 .backtrace {

@@ -30,10 +30,10 @@ pub struct FiftState {
 impl FiftState {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Result<FiftState, JsValue> {
-        let mut env_writer = Box::new(EnvWriter::default());
+        let mut env_writer = Box::<EnvWriter>::default();
         let env = env_writer.make_handle();
 
-        let mut output_writer = Box::new(OutputWriter::default());
+        let mut output_writer = Box::<OutputWriter>::default();
         let output = output_writer.make_handle();
 
         let env_writer_ref =

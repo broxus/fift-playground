@@ -38,7 +38,7 @@ recursive lisp-ctx-eval {
 recursive lisp-ctx-eval-list
 { over null? { drop } {
   swap uncons -rot over lisp-ctx-eval -rot lisp-ctx-eval-list cons
-  } cond 
+  } cond
 } swap !
 // (exprs) ctx -- val
 { null rot {
@@ -205,7 +205,7 @@ forget 0L:  forget 1L:  forget 2L:
 { 3 exch 3 pick lisp-ctx-eval lisp-true? ' swap if nip swap lisp-ctx-eval }
 `if 3 lisp-fixed-lazy-primitive
 // (e) ctx
-{ #t -rot 
+{ #t -rot
   { over null? { 2drop true } {
     swap uncons swap 2 pick lisp-ctx-eval dup lisp-true? // v' c t v ?
     { swap 2swap nip false } { -rot 2drop nip true } cond
@@ -228,14 +228,14 @@ forget 0L:  forget 1L:  forget 2L:
 } : eval-cond-clause
 // (clauses) ctx -- v
 { { over null? { no-answer true } {
-    swap uncons -rot over eval-cond-clause } cond 
+    swap uncons -rot over eval-cond-clause } cond
   } until -rot 2drop
 } `cond lisp-lazy-primitive
 { lisp-dict @ lookup-in { hole tuck lisp-dict-int-define } ifnot
 } : lisp-create-global-var
 // a e ctx  -- old (simple) define
 { drop over atom? not abort"only a variable can be define'd"
-  over lisp-create-global-var swap lisp-eval swap ! 
+  over lisp-create-global-var swap lisp-eval swap !
 } drop // `define 2 lisp-fixed-lazy-primitive
 { tuck lisp-ctx-eval rot dup atom? not abort"only a variable can be set"
   rot lookup-or-fail dup @ -rot !
@@ -255,7 +255,7 @@ forget 0L:  forget 1L:  forget 2L:
 } : is-quote?
 recursive match-arg-list-acc
 // l (vars) (args) -- ((var . arg) ...)+l -1 or ? 0
-{ over atom? { over `_ eq? { 2drop } { pair swap cons } cond true } { 
+{ over atom? { over `_ eq? { 2drop } { pair swap cons } cond true } {
   over null? { nip null? } { // (vars) (args)
   over tuple? not { 2drop false } {
   over is-quote? { eq? nip } { // (v) (a)
@@ -279,7 +279,7 @@ recursive match-arg-list-acc
   nip
 } : extend-ctx-by-list
 // ((vars) body) ctx
-{ swap uncons -rot 
+{ swap uncons -rot
   dup lambda-var-list? not abort"invalid formal parameter list"
   { // l-expr ctx' [_ body ctx (vars)]
     -rot 2 pick 3 [] swap rot  // [_ body ...] (vars) ctx' l-expr
@@ -291,7 +291,7 @@ recursive match-arg-list-acc
 } : make-lambda
 { make-lambda } `lambda lisp-lazy-primitive
 // (a e) ctx -- more sophisticated (define a e)
-{ drop uncons swap dup atom? { // (e) a 
+{ drop uncons swap dup atom? { // (e) a
     tuck lisp-create-global-var
     swap lisp-dict @ lisp-ctx-eval-list-last swap !
   } { // (e) (a v..)
@@ -356,63 +356,12 @@ lisp-dict @ constant original-lisp-dict
 { original-lisp-dict lisp-dict ! } : reset-lisp
 { ' drop { lisp-eval .l cr } List-generic( } :_ LISP-EVAL-PRINT(
 // LISP-EVAL-PRINT((+ 3 4) (* 5 6)) computes and prints 12 and 30
-{ hole dup 1 { @ nip } does swap 
-  1 { swap lisp-eval swap ! } does 
+{ hole dup 1 { @ nip } does swap
+  1 { swap lisp-eval swap ! } does
   List-generic(
 } :_ LISP-EVAL(
 // LISP-EVAL((+ 3 4) (* 5 6)) computes 12 and 30, returns only 30
-// /*
-LISP-EVAL-PRINT(
-  (define succ (lambda (x) (+ x 1)))
-  (define (twice f) (lambda (x) (f (f x))))
-  (define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))
-  (fact ((twice succ) 5))
-  (define compare (lambda (x y) (cond ((< x y) 'less) ((= x y) 'equal) (else 'greater))))
-  (compare 2 3)
-  (compare 7 (+ 2 3))
-  (define next (let ((cnt 0)) (lambda () (set! cnt (+ cnt 1)) cnt)))
-  (list (next) (next))
-  (define new-counter (lambda () (let ((x 0)) (lambda () (set! x (+ x 1)) x))))
-  (define c1 (new-counter))
-  (define c2 (new-counter))
-  (list (c1) (c1) (c2) (c1) (c2) (c1) (c1) (c2) (c2))
-  (let* ((x (+ 2 3)) (y (* x x)) (z (+ x y))) (list x y z))
-  (letrec ((even? (lambda (n) (if (= n 0) #t (odd? (- n 1)))))
-           (odd?  (lambda (n) (if (= n 0) #f (even? (- n 1))))))
-          (even? 88))
-  (define (len l) (if (null? l) 0 (+ 1 (len (cdr l)))))
-  (len '(2 3 9))
-  (define (len2 l) (match l (() 0) ((x . t) (+ 1 (len2 t)))))
-  (len2 '(2 3 9))
-  (define (foo x) (match x
-     (('zero) 0)
-     (('succ x) (+ (foo x) 1))
-     (('plus x y) (+ (foo x) (foo y)))
-     (('minus x y) (- (foo x) (foo y)))
-     (x x)))
-  (foo '(plus (succ (zero)) (minus (succ (succ 5)) 3)))
-  (define (bar x) (match x
-     (['zero] 0)
-     (['succ x] (+ (bar x) 1))
-     (['plus x y] (+ (bar x) (bar y)))
-     (['minus x y] (- (bar x) (bar y)))
-     (['const x] x)))
-  (bar '[plus [succ [zero]] [minus [succ [succ [const 5]]] [const 3]]])
-  (define (map f l) (letrec
-    ((map-f (lambda (l) (match l
-      (() ())
-      ((h . t) (cons (f h) (map-f t)))))))
-    (map-f l)))
-  (map (lambda (x) (* x (+ 2 x))) '(2 3 9))
-  (define (make-promise proc) (let ((result-ready? #f) (result #f))
-    (lambda ()
-      (if result-ready? result
-        (let ((x (proc)))
-	  (if result-ready? result
-	    (begin (set! result x) (set! result-ready? #t) result)))))))
-  (define (force promise) (promise))
-)
-// */
+
 // words for invoking Lisp definitions from Fift
 // (args) def -- val
 { null rot map-quote cons lisp-dict @ rot run-definition
