@@ -79,6 +79,10 @@ impl FiftState {
                 output = output.set("success", false).set("stderr", format!("{e:?}"));
 
                 if let Some(pos) = self.context.input.get_position() {
+                    let word_start = pos.line[..pos.word_start].chars().count();
+                    let word_end =
+                        word_start + pos.line[pos.word_start..pos.word_end].chars().count();
+
                     output = output.set(
                         "errorPosition",
                         ObjectBuilder::new()
@@ -86,8 +90,8 @@ impl FiftState {
                             .set("blockName", pos.source_block_name)
                             .set("line", pos.line)
                             .set("lineNumber", pos.line_number)
-                            .set("wordStart", pos.word_start)
-                            .set("wordEnd", pos.word_end)
+                            .set("wordStart", word_start)
+                            .set("wordEnd", word_end)
                             .build(),
                     );
                 };
