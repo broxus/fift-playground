@@ -1,0 +1,55 @@
+name: Publish
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Setup rust cache
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install binaryen
+        run: sudo apt install binaryen
+
+      - name: Build wasm
+        run: npm run wasm
+
+      - name: Build app
+        run: npm run build
+
+      - name: Set CNAME
+        run: echo 'fift.bytie.moe' > ./dist/CNAME
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
