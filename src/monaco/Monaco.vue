@@ -10,6 +10,18 @@ import { getOrCreateModel } from './utils';
 
 import fiftGrammar from './fift.tmLanguage.json';
 
+const registry = new Registry({
+  getGrammarDefinition: async _ => {
+    return {
+      format: 'json',
+      content: fiftGrammar
+    };
+  }
+});
+
+const grammars = new Map();
+grammars.set('fift', 'source.fif');
+
 const props = withDefaults(
   defineProps<{
     filename: string
@@ -27,7 +39,7 @@ const containerRef = ref<HTMLDivElement>();
 const editor = shallowRef<monaco.editor.IStandaloneCodeEditor>();
 const store = inject<Store>('store')!;
 
-initMonaco(store);
+const initPromise = initMonaco(store);
 
 const lang = computed(() => 'fift');
 
@@ -99,18 +111,7 @@ onMounted(async () => {
     )
   }
 
-  const registry = new Registry({
-    getGrammarDefinition: async _ => {
-      return {
-        format: 'json',
-        content: fiftGrammar
-      };
-    }
-  });
-
-  const grammars = new Map();
-  grammars.set('fift', 'source.fif');
-  await wireTmGrammars(monaco as any, registry, grammars, editorInstance as any);
+  initPromise.then(() => wireTmGrammars(monaco as any, registry, grammars, editorInstance as any));
 
   editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
     // ignore save event

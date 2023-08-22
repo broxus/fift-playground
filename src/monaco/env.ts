@@ -10,12 +10,13 @@ import { getOrCreateModel } from './utils';
 const URI_PREFIX_LEN = 'file:///'.length;
 
 let initted = false;
-export function initMonaco(store: Store) {
+let wasmPromise = Promise.resolve();
+export async function initMonaco(store: Store) {
   if (initted) {
-    return;
+    return wasmPromise;
   }
   loadMonacoEnv();
-  loadWasm();
+  wasmPromise = loadWasm();
 
   watchEffect(() => {
     for (const filename in store.state.files) {
@@ -37,6 +38,7 @@ export function initMonaco(store: Store) {
   });
 
   initted = true;
+  return wasmPromise;
 }
 
 export function loadWasm() {
@@ -45,7 +47,7 @@ export function loadWasm() {
 
 export function loadMonacoEnv() {
   (self as any).MonacoEnvironment = {
-    async getWorker(_: any, label: string) {
+    async getWorker(_: any, _label: string) {
       return new editorWorker();
     }
   };
