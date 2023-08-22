@@ -240,9 +240,9 @@ checksum = "e825f6987101665dea6ec934c09ec6d721de7bc1bf92248e1d5810c8cd636b77"
 
 [[package]]
 name = "fift"
-version = "0.1.13"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5ca9631c1aa36c049d126001e0c8f4058da903ff8d56c7b5dad7cd290da4983"
+checksum = "896850b9b3f98b10ab7b09607717f2cc084d0796343f6cf041e850d25239fa2f"
 dependencies = [
  "ahash",
  "anyhow",
