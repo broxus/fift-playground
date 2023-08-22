@@ -20,7 +20,7 @@ This website is built using `Vue` and `Rust`.
 ### Installation
 
 ```bash
-git clone https://github.com/Rexagon/fift-playground.git
+git clone https://github.com/broxus/fift-playground.git
 cd everscale-web-tools
 npm install
 npm run wasm
@@ -51,4 +51,4 @@ We welcome contributions to the project! If you notice any issues or errors, fee
 
 Licensed under GNU Lesser General Public License v2.1 ([/cli/LICENSE](./cli/LICENSE) or <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>)
 
-Uses a modified version of [original fift libraries](https://github.com/ton-blockchain/ton/tree/master/crypto/fift/lib) ([LGPL-2.1](./fift-wasm/src/lib/LICENSE)).
+Uses a modified version of [original fift libraries](https://github.com/ton-blockchain/ton/tree/master/crypto/fift/lib) ([LGPL-2.1](./fift-lib/LICENSE)).

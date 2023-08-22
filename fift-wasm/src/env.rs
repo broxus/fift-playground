@@ -95,18 +95,21 @@ fn not_found(name: &str) -> std::io::Error {
 }
 
 macro_rules! define_libs {
-    ($($name:literal => $path:literal),*$(,)?) => {&[
-        $(($name, include_bytes!($path))),*
+    ($prefix:literal, [ $($name:literal),*$(,)? ]) => {&[
+        $(($name, include_bytes!(concat!($prefix, $name)))),*
     ]};
 }
 
-const LIBRARIES: &[(&str, &[u8])] = define_libs! {
-    "Asm.fif" => "lib/Asm.fif",
-    "Color.fif" => "lib/Color.fif",
-    "Fift.fif" => "lib/Fift.fif",
-    "FiftExt.fif" => "lib/FiftExt.fif",
-    "Lisp.fif" => "lib/Lisp.fif",
-    "Lists.fif" => "lib/Lists.fif",
-    "Stack.fif" => "lib/Stack.fif",
-    "TonUtil.fif" => "lib/TonUtil.fif",
-};
+const LIBRARIES: &[(&str, &[u8])] = define_libs!(
+    "../../fift-lib/",
+    [
+        "Asm.fif",
+        "Color.fif",
+        "Fift.fif",
+        "FiftExt.fif",
+        "Lisp.fif",
+        "Lists.fif",
+        "Stack.fif",
+        "TonUtil.fif",
+    ]
+);
