@@ -1,0 +1,36 @@
+/* color palette from <https://github.com/vuejs/theme> */
+:root {
+  --bg: #1a1a1a;
+  --bg-soft: #242424;
+  --border: #383838;
+  --text-light: #aaa;
+  --color-branding: #42d392;
+  --color-branding-dark: #89ddff;
+
+  --font-code: Menlo, Monaco, Consolas, 'Courier New', monospace;
+  --header-height: 38px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+html {
+  color: var(--text-light);
+  background: var(--bg-soft);
+}
+
+body {
+  margin: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100vh;
+}
