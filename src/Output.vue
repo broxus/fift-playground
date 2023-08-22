@@ -33,6 +33,26 @@ const state = ref<OutputState>(makeDefaultState())
 const tabs = ref<Tab[]>();
 const selectedTab = ref<Tab>();
 
+const textEncoder = new TextEncoder();
+
+class FilesProvider implements fift.IFileProvider {
+  fileExists(name: string): boolean {
+    return store.state.files[name] != null;
+  }
+
+  readFile(name: string): ArrayBuffer {
+    const file = store.state.files[name];
+    if (file == null) {
+      throw new Error('File not found');
+    } else if (name == store.state.activeFile?.filename) {
+      throw new Error('Cannot include active file')
+    }
+    return textEncoder.encode(file.code);
+  }
+}
+
+const filesProvider = new FilesProvider();
+
 watchEffect(() => {
   const fift = fiftModule.value;
   if (fift == null) {
@@ -51,7 +71,7 @@ watchEffect(() => {
 
   let fiftState: fift.FiftState;
   try {
-    fiftState = new fift.FiftState();
+    fiftState = new fift.FiftState(filesProvider);
     const res = fiftState.run(activeFile.code, store.state.includeStdlib);
 
     state.value.stdout = res.stdout;

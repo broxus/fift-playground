@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 fift = "0.1"
+getrandom = { version = "0.2", features = ["js"] }
+gloo-utils = { version = "0.2", default-features = false }
 js-sys = "0.3"
 wasm-bindgen = { version = "0.2", features = [] }
-
-getrandom = { version = "0.2", features = ["js"] }

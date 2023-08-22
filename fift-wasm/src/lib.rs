@@ -5,11 +5,40 @@ use std::rc::Rc;
 use fift::core::Environment;
 use wasm_bindgen::prelude::*;
 
-use self::env::WasmEnvironment;
+use self::env::{IFileProvider, WasmEnvironment};
 use self::util::*;
 
 mod env;
 mod util;
+
+#[wasm_bindgen(typescript_custom_section)]
+const TYPES: &str = r#"
+export type ExecutionOutput = { stdout: string } & (
+    | {
+        success: true;
+        exitCode: number;
+    }
+    | {
+        success: false;
+        stderr: string;
+        errorPosition?: {
+            depth: number;
+            blockName: string;
+            line: string;
+            lineNumber: number;
+            wordStart: number;
+            wordEnd: number;
+        },
+        backtrace?: string[];
+    }
+);
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "ExecutionOutput")]
+    pub type ExecutionOutput;
+}
 
 #[wasm_bindgen]
 pub struct FiftState {
@@ -29,8 +58,8 @@ pub struct FiftState {
 #[wasm_bindgen]
 impl FiftState {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Result<FiftState, JsValue> {
-        let mut env_writer = Box::<EnvWriter>::default();
+    pub fn new(files: IFileProvider) -> Result<FiftState, JsValue> {
+        let mut env_writer = Box::new(EnvWriter::new(files));
         let env = env_writer.make_handle();
 
         let mut output_writer = Box::<OutputWriter>::default();
@@ -123,35 +152,6 @@ impl FiftState {
     }
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const EXECUTION_OUTPUT: &str = r#"
-export type ExecutionOutput = { stdout: string } & (
-    | {
-        success: true;
-        exitCode: number;
-    }
-    | {
-        success: false;
-        stderr: string;
-        errorPosition?: {
-            depth: number;
-            blockName: string;
-            line: string;
-            lineNumber: number;
-            wordStart: number;
-            wordEnd: number;
-        },
-        backtrace?: string[];
-    }
-);
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "ExecutionOutput")]
-    pub type ExecutionOutput;
-}
-
 #[derive(Default)]
 pub struct OutputWriter(Rc<RefCell<Vec<u8>>>);
 
@@ -184,10 +184,13 @@ impl OutputHandle {
     }
 }
 
-#[derive(Default)]
 pub struct EnvWriter(Rc<RefCell<WasmEnvironment>>);
 
 impl EnvWriter {
+    fn new(files: IFileProvider) -> Self {
+        Self(Rc::new(RefCell::new(WasmEnvironment::new(files))))
+    }
+
     fn make_handle(&self) -> EnvHandle {
         EnvHandle(self.0.clone())
     }
