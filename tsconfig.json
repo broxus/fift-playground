@@ -18,7 +18,8 @@
     "jsx": "preserve",
     "paths": {
       "@fift": ["./fift-wasm/pkg"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "references": [

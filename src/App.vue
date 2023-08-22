@@ -1,35 +1,47 @@
 <script setup lang="ts">
+import { provide } from 'vue'
+
+import { ReplStore } from './store';
+
+import SplitPane from './SplitPane.vue';
+import EditorContainer from './EditorContainer.vue';
+import Output from './Output.vue';
+
+const store = new ReplStore();
+store.init();
+
+provide('store', store);
 </script>
 
 <template>
-  Test
+  <main>
+    <SplitPane>
+      <template #left>
+        <EditorContainer />
+      </template>
+      <template #right>
+        <Output />
+      </template>
+    </SplitPane>
+  </main>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<style>
+main {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-soft);
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+  background-color: transparent;
 }
 </style>

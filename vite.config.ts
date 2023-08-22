@@ -13,7 +13,7 @@ export default defineConfig({
   publicDir: path.resolve(__dirname, 'public'),
   resolve: {
     alias: {
-      '@fift': path.resolve(__dirname, 'fift/pkg')
+      '@fift': path.resolve(__dirname, 'fift-wasm/pkg')
     }
   }
 });

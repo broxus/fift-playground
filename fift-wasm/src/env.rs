@@ -1,17 +1,17 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
-#[derive(Default)]
 pub struct WasmEnvironment {
-    files: HashMap<String, Vec<u8>>,
+    files: HashMap<String, Cow<'static, [u8]>>,
 }
 
-impl WasmEnvironment {
-    pub fn clear(&mut self) {
-        self.files.clear();
-    }
-
-    pub fn remove_file(&mut self, name: &str) {
-        self.files.remove(name);
+impl Default for WasmEnvironment {
+    fn default() -> Self {
+        let mut files = HashMap::new();
+        for &(name, content) in LIBRARIES {
+            files.insert(name.to_owned(), Cow::Borrowed(content));
+        }
+        Self { files }
     }
 }
 
@@ -29,13 +29,14 @@ impl fift::core::Environment for WasmEnvironment {
     }
 
     fn write_file(&mut self, name: &str, contents: &[u8]) -> std::io::Result<()> {
-        self.files.insert(name.to_owned(), contents.to_owned());
+        self.files
+            .insert(name.to_owned(), Cow::Owned(contents.to_owned()));
         Ok(())
     }
 
     fn read_file(&mut self, name: &str) -> std::io::Result<Vec<u8>> {
         match self.files.get(name) {
-            Some(data) => Ok(data.clone()),
+            Some(data) => Ok(data.to_vec()),
             None => Err(not_found(name)),
         }
     }
@@ -62,10 +63,13 @@ impl fift::core::Environment for WasmEnvironment {
         let Some(data) = self.files.get(name) else {
             return Err(not_found(name));
         };
-        Ok(fift::core::SourceBlock::new(
-            name,
-            std::io::Cursor::new(data.clone()),
-        ))
+
+        Ok(match data {
+            Cow::Owned(data) => {
+                fift::core::SourceBlock::new(name, std::io::Cursor::new(data.clone()))
+            }
+            Cow::Borrowed(data) => fift::core::SourceBlock::new(name, std::io::Cursor::new(*data)),
+        })
     }
 }
 
@@ -89,3 +93,20 @@ fn not_found(name: &str) -> std::io::Error {
         format!("`{name}` file not found"),
     )
 }
+
+macro_rules! define_libs {
+    ($($name:literal => $path:literal),*$(,)?) => {&[
+        $(($name, include_bytes!($path))),*
+    ]};
+}
+
+const LIBRARIES: &'static [(&'static str, &'static [u8])] = define_libs! {
+    "Asm.fif" => "lib/Asm.fif",
+    "Color.fif" => "lib/Color.fif",
+    "Fift.fif" => "lib/Fift.fif",
+    "FiftExt.fif" => "lib/FiftExt.fif",
+    "Lisp.fif" => "lib/Lisp.fif",
+    "Lists.fif" => "lib/Lists.fif",
+    "Stack.fif" => "lib/Stack.fif",
+    "TonUtil.fif" => "lib/TonUtil.fif",
+};

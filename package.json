@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "fflate": "^0.8.0",
+    "monaco-editor-core": "^0.41.0",
+    "onigasm": "^2.2.5",
     "vue": "^3.3.4"
   },
   "devDependencies": {

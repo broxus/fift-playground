@@ -2,11 +2,14 @@ use std::cell::RefCell;
 use std::io::Write;
 use std::rc::Rc;
 
+use fift::core::Environment;
 use wasm_bindgen::prelude::*;
 
 use self::env::WasmEnvironment;
+use self::util::*;
 
 mod env;
+mod util;
 
 #[wasm_bindgen]
 pub struct FiftState {
@@ -52,15 +55,97 @@ impl FiftState {
     }
 
     #[wasm_bindgen]
-    pub fn run(&mut self, input: String) -> Result<String, JsValue> {
+    pub fn run(&mut self, input: String, with_stdlib: bool) -> Result<ExecutionOutput, JsValue> {
         self.context.add_source_block(fift::core::SourceBlock::new(
             "<stdin>",
             std::io::Cursor::new(input),
         ));
-        self.context.run().handle_error()?;
 
-        String::from_utf8(self.output.take_all()).handle_error()
+        if with_stdlib {
+            self.context
+                .add_source_block(self.env.borrow().include("Fift.fif").handle_error()?);
+        }
+
+        let res = self.context.run();
+
+        let mut output = ObjectBuilder::new().set(
+            "stdout",
+            String::from_utf8(self.output.take_all()).handle_error()?,
+        );
+
+        match res {
+            Ok(exit_code) => output = output.set("success", true).set("exitCode", !exit_code),
+            Err(e) => {
+                output = output.set("success", false).set("stderr", format!("{e:?}"));
+
+                if let Some(pos) = self.context.input.get_position() {
+                    output = output.set(
+                        "errorPosition",
+                        ObjectBuilder::new()
+                            .set("depth", pos.offset)
+                            .set("blockName", pos.source_block_name)
+                            .set("line", pos.line)
+                            .set("lineNumber", pos.line_number)
+                            .set("wordStart", pos.word_start)
+                            .set("wordEnd", pos.word_end)
+                            .build(),
+                    );
+                };
+
+                if let Some(next) = self.context.next.take() {
+                    let d = &self.context.dicts.current;
+                    let mut buffer = String::new();
+
+                    let backtrace: js_sys::Array = js_sys::Array::new();
+                    let mut cont = &next;
+                    loop {
+                        buffer.clear();
+                        std::fmt::write(&mut buffer, format_args!("{}", cont.display_dump(d)))
+                            .expect("Should not fail");
+                        backtrace.push(&JsValue::from_str(&buffer));
+
+                        let Some(next) = cont.up() else {
+                            break;
+                        };
+                        cont = next;
+                    }
+
+                    output = output.set("backtrace", backtrace);
+                }
+            }
+        }
+
+        Ok(output.build().unchecked_into())
     }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const EXECUTION_OUTPUT: &str = r#"
+export type ExecutionOutput = { stdout: string } & (
+    | {
+        success: true;
+        exitCode: number;
+    }
+    | {
+        success: false;
+        stderr: string;
+        errorPosition?: {
+            depth: number;
+            blockName: string;
+            line: string;
+            lineNumber: number;
+            wordStart: number;
+            wordEnd: number;
+        },
+        backtrace?: string[];
+    }
+);
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "ExecutionOutput")]
+    pub type ExecutionOutput;
 }
 
 #[derive(Default)]
@@ -140,25 +225,4 @@ impl EnvHandle {
     fn borrow(&self) -> std::cell::Ref<'_, WasmEnvironment> {
         self.0.borrow()
     }
-
-    fn borrow_mut(&self) -> std::cell::RefMut<'_, WasmEnvironment> {
-        self.0.borrow_mut()
-    }
-}
-
-impl<T, E> HandleError for Result<T, E>
-where
-    E: ToString,
-{
-    type Output = T;
-
-    fn handle_error(self) -> Result<Self::Output, JsValue> {
-        self.map_err(|e| js_sys::Error::new(&e.to_string()).into())
-    }
-}
-
-pub trait HandleError {
-    type Output;
-
-    fn handle_error(self) -> Result<Self::Output, JsValue>;
 }
