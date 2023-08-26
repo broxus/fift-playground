@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
 use gloo_utils::errors::JsError;
 use wasm_bindgen::prelude::*;
@@ -31,10 +30,6 @@ pub struct WasmEnvironment {
 
 impl WasmEnvironment {
     pub fn new(files: IFileProvider) -> Self {
-        let mut libraries = HashMap::with_capacity(LIBRARIES.len());
-        for &(name, content) in LIBRARIES {
-            libraries.insert(name, content);
-        }
         Self {
             temp_files: Default::default(),
             external_files: files,
@@ -53,7 +48,7 @@ impl fift::core::Environment for WasmEnvironment {
 
     fn file_exists(&self, name: &str) -> bool {
         self.temp_files.contains_key(name)
-            || libraries().contains_key(name)
+            || fift_libs::all().contains_key(name)
             || self.external_files.file_exists(name)
     }
 
@@ -67,8 +62,8 @@ impl fift::core::Environment for WasmEnvironment {
             Ok(data.to_vec())
         } else if self.external_files.file_exists(name) {
             self.external_files.read_file(name).map_err(map_js_err)
-        } else if let Some(data) = libraries().get(name) {
-            Ok(data.to_vec())
+        } else if let Some(data) = fift_libs::all().get(name) {
+            Ok(data.as_bytes().to_vec())
         } else {
             Err(not_found(name))
         }
@@ -95,8 +90,8 @@ impl fift::core::Environment for WasmEnvironment {
                 .read_file(name)
                 .map(Cow::Owned)
                 .map_err(map_js_err)?
-        } else if let Some(data) = libraries().get(name) {
-            Cow::Borrowed(*data)
+        } else if let Some(data) = fift_libs::all().get(name) {
+            Cow::Borrowed(data.as_bytes())
         } else {
             return Err(not_found(name));
         };
@@ -112,7 +107,7 @@ impl fift::core::Environment for WasmEnvironment {
             let data = self.external_files.read_file(name).map_err(map_js_err)?;
             fift::core::SourceBlock::new(name, std::io::Cursor::new(data))
         } else {
-            let Some(data) = libraries().get(name) else {
+            let Some(data) = fift_libs::all().get(name) else {
                 return Err(not_found(name));
             };
             fift::core::SourceBlock::new(name, std::io::Cursor::new(*data))
@@ -160,34 +155,3 @@ fn not_found(name: &str) -> std::io::Error {
         format!("`{name}` file not found"),
     )
 }
-
-macro_rules! define_libs {
-    ($prefix:literal, [ $($name:literal),*$(,)? ]) => {&[
-        $(($name, include_bytes!(concat!($prefix, $name)))),*
-    ]};
-}
-
-fn libraries() -> &'static HashMap<&'static str, &'static [u8]> {
-    static MAP: OnceLock<HashMap<&'static str, &'static [u8]>> = OnceLock::new();
-    MAP.get_or_init(|| {
-        let mut libraries = HashMap::with_capacity(LIBRARIES.len());
-        for &(name, content) in LIBRARIES {
-            libraries.insert(name, content);
-        }
-        libraries
-    })
-}
-
-const LIBRARIES: &[(&str, &[u8])] = define_libs!(
-    "../../fift-lib/",
-    [
-        "Asm.fif",
-        "Color.fif",
-        "Fift.fif",
-        "FiftExt.fif",
-        "Lisp.fif",
-        "Lists.fif",
-        "Stack.fif",
-        "TonUtil.fif",
-    ]
-);

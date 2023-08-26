@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 fift = "0.1"
+fift-libs = "0.1"
 getrandom = { version = "0.2", features = ["js"] }
 gloo-utils = { version = "0.2", default-features = false }
 js-sys = "0.3"

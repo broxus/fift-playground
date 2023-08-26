@@ -95,8 +95,12 @@ impl FiftState {
         ));
 
         if with_stdlib {
-            self.context
-                .add_source_block(self.env.borrow().include("Fift.fif").handle_error()?);
+            self.context.add_source_block(
+                self.env
+                    .borrow()
+                    .include(fift_libs::base_lib().name)
+                    .handle_error()?,
+            );
         }
 
         let res = self.context.run();
