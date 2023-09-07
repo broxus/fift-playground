@@ -69,10 +69,8 @@ watchEffect(() => {
 
   state.value = makeDefaultState();
 
-  let fiftState: fift.FiftState;
   try {
-    fiftState = new fift.FiftState(filesProvider);
-    const res = fiftState.run(activeFile.code, store.state.includeStdlib);
+    const res = fift.interpret(filesProvider, activeFile.code, store.state.includeStdlib);
 
     state.value.stdout = res.stdout;
     if (res.success == true) {
@@ -105,9 +103,11 @@ watchEffect(() => {
       }
     }
   } catch (e: any) {
-    state.value.stderr = e.toString();
-  } finally {
-    fiftState?.free();
+    if (model != null) {
+      monaco.editor.setModelMarkers(model, OWNER, []);
+    }
+    tabs.value = ERR_TABS_SHORT;
+    state.value.stderr = `Execution failed: ${e.message.toString()}`;
   }
 });
 </script>

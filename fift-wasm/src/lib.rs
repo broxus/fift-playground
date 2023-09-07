@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 use std::io::Write;
-use std::rc::Rc;
 
 use fift::core::Environment;
 use wasm_bindgen::prelude::*;
@@ -40,204 +38,110 @@ extern "C" {
     pub type ExecutionOutput;
 }
 
-#[wasm_bindgen]
-pub struct FiftState {
-    #[wasm_bindgen(skip)]
-    pub context: fift::Context<'static>,
-    #[wasm_bindgen(skip)]
-    pub env: EnvHandle,
-    #[wasm_bindgen(skip)]
-    pub output: OutputHandle,
+#[wasm_bindgen(js_name = "interpret")]
+pub fn interpret(
+    files: IFileProvider,
+    input: String,
+    with_stdlib: bool,
+) -> Result<ExecutionOutput, JsValue> {
+    let mut env_writer = WasmEnvironment::new(files);
+    let mut output_writer = OutputWriter::default();
 
-    #[wasm_bindgen(skip)]
-    pub _env_writer: Box<EnvWriter>,
-    #[wasm_bindgen(skip)]
-    pub _output_writer: Box<OutputWriter>,
-}
+    let stdlib = with_stdlib
+        .then(|| env_writer.include(fift_libs::base_lib().name))
+        .transpose()
+        .handle_error()?;
 
-#[wasm_bindgen]
-impl FiftState {
-    #[wasm_bindgen(constructor)]
-    pub fn new(files: IFileProvider) -> Result<FiftState, JsValue> {
-        let mut env_writer = Box::new(EnvWriter::new(files));
-        let env = env_writer.make_handle();
+    let mut context = fift::Context::new(&mut env_writer, &mut output_writer)
+        .with_basic_modules()
+        .handle_error()?
+        .with_limits(fift::core::ExecutionLimits {
+            max_steps: Some(10_000_000),
+            max_include_depth: Some(100),
+        });
 
-        let mut output_writer = Box::<OutputWriter>::default();
-        let output = output_writer.make_handle();
+    context.add_source_block(fift::core::SourceBlock::new(
+        "<stdin>",
+        std::io::Cursor::new(input),
+    ));
 
-        let env_writer_ref =
-            unsafe { std::mem::transmute::<_, &'static mut EnvWriter>(env_writer.as_mut()) };
-        let output_writer_ref =
-            unsafe { std::mem::transmute::<_, &'static mut OutputWriter>(output_writer.as_mut()) };
-
-        let context = fift::Context::new(env_writer_ref, output_writer_ref)
-            .with_basic_modules()
-            .handle_error()?
-            .with_limits(fift::core::ExecutionLimits {
-                max_steps: Some(10_000_000),
-                max_include_depth: Some(100),
-            });
-
-        Ok(FiftState {
-            context,
-            env,
-            output,
-            _env_writer: env_writer,
-            _output_writer: output_writer,
-        })
+    if let Some(stdlib) = stdlib {
+        context.add_source_block(stdlib);
     }
 
-    #[wasm_bindgen]
-    pub fn run(&mut self, input: String, with_stdlib: bool) -> Result<ExecutionOutput, JsValue> {
-        self.context.add_source_block(fift::core::SourceBlock::new(
-            "<stdin>",
-            std::io::Cursor::new(input),
-        ));
+    let res = context.run();
 
-        if with_stdlib {
-            self.context.add_source_block(
-                self.env
-                    .borrow()
-                    .include(fift_libs::base_lib().name)
-                    .handle_error()?,
-            );
-        }
+    let mut output = ObjectBuilder::new();
+    match res {
+        Ok(exit_code) => output = output.set("success", true).set("exitCode", !exit_code),
+        Err(e) => {
+            output = output.set("success", false).set("stderr", format!("{e:?}"));
 
-        let res = self.context.run();
+            if let Some(pos) = context.input.get_position() {
+                let word_start = pos.line[..pos.word_start].chars().count();
+                let word_end = word_start + pos.line[pos.word_start..pos.word_end].chars().count();
 
-        let mut output = ObjectBuilder::new().set(
-            "stdout",
-            String::from_utf8(self.output.take_all()).handle_error()?,
-        );
+                output = output.set(
+                    "errorPosition",
+                    ObjectBuilder::new()
+                        .set("depth", pos.offset)
+                        .set("blockName", pos.source_block_name)
+                        .set("line", pos.line)
+                        .set("lineNumber", pos.line_number)
+                        .set("wordStart", word_start)
+                        .set("wordEnd", word_end)
+                        .build(),
+                );
+            };
 
-        match res {
-            Ok(exit_code) => output = output.set("success", true).set("exitCode", !exit_code),
-            Err(e) => {
-                output = output.set("success", false).set("stderr", format!("{e:?}"));
+            if let Some(next) = context.next.take() {
+                let d = &context.dicts.current;
+                let mut buffer = String::new();
 
-                if let Some(pos) = self.context.input.get_position() {
-                    let word_start = pos.line[..pos.word_start].chars().count();
-                    let word_end =
-                        word_start + pos.line[pos.word_start..pos.word_end].chars().count();
+                let backtrace: js_sys::Array = js_sys::Array::new();
+                let mut cont = &next;
+                loop {
+                    buffer.clear();
+                    std::fmt::write(&mut buffer, format_args!("{}", cont.display_dump(d)))
+                        .expect("Should not fail");
+                    backtrace.push(&JsValue::from_str(&buffer));
 
-                    output = output.set(
-                        "errorPosition",
-                        ObjectBuilder::new()
-                            .set("depth", pos.offset)
-                            .set("blockName", pos.source_block_name)
-                            .set("line", pos.line)
-                            .set("lineNumber", pos.line_number)
-                            .set("wordStart", word_start)
-                            .set("wordEnd", word_end)
-                            .build(),
-                    );
-                };
-
-                if let Some(next) = self.context.next.take() {
-                    let d = &self.context.dicts.current;
-                    let mut buffer = String::new();
-
-                    let backtrace: js_sys::Array = js_sys::Array::new();
-                    let mut cont = &next;
-                    loop {
-                        buffer.clear();
-                        std::fmt::write(&mut buffer, format_args!("{}", cont.display_dump(d)))
-                            .expect("Should not fail");
-                        backtrace.push(&JsValue::from_str(&buffer));
-
-                        let Some(next) = cont.up() else {
-                            break;
-                        };
-                        cont = next;
-                    }
-
-                    output = output.set("backtrace", backtrace);
+                    let Some(next) = cont.up() else {
+                        break;
+                    };
+                    cont = next;
                 }
+
+                output = output.set("backtrace", backtrace);
             }
         }
-
-        Ok(output.build().unchecked_into())
     }
+
+    Ok(output
+        .set(
+            "stdout",
+            String::from_utf8(std::mem::take(&mut output_writer.0)).handle_error()?,
+        )
+        .build()
+        .unchecked_into())
 }
 
 #[derive(Default)]
-pub struct OutputWriter(Rc<RefCell<Vec<u8>>>);
-
-impl OutputWriter {
-    fn make_handle(&self) -> OutputHandle {
-        OutputHandle(self.0.clone())
-    }
-}
+pub struct OutputWriter(Vec<u8>);
 
 impl Write for OutputWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let len = buf.len();
-        self.0.borrow_mut().write_all(buf).map(|_| len)
+        self.0.extend_from_slice(buf);
+        Ok(len)
     }
 
     fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
-        self.0.borrow_mut().write_all(buf)
+        self.0.extend_from_slice(buf);
+        Ok(())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
-    }
-}
-
-pub struct OutputHandle(Rc<RefCell<Vec<u8>>>);
-
-impl OutputHandle {
-    fn take_all(&self) -> Vec<u8> {
-        std::mem::take(&mut *self.0.borrow_mut())
-    }
-}
-
-pub struct EnvWriter(Rc<RefCell<WasmEnvironment>>);
-
-impl EnvWriter {
-    fn new(files: IFileProvider) -> Self {
-        Self(Rc::new(RefCell::new(WasmEnvironment::new(files))))
-    }
-
-    fn make_handle(&self) -> EnvHandle {
-        EnvHandle(self.0.clone())
-    }
-}
-
-impl fift::core::Environment for EnvWriter {
-    fn now_ms(&self) -> u64 {
-        self.0.borrow().now_ms()
-    }
-
-    fn get_env(&self, name: &str) -> Option<String> {
-        self.0.borrow().get_env(name)
-    }
-
-    fn file_exists(&self, name: &str) -> bool {
-        self.0.borrow().file_exists(name)
-    }
-
-    fn write_file(&mut self, name: &str, contents: &[u8]) -> std::io::Result<()> {
-        self.0.borrow_mut().write_file(name, contents)
-    }
-
-    fn read_file(&mut self, name: &str) -> std::io::Result<Vec<u8>> {
-        self.0.borrow_mut().read_file(name)
-    }
-
-    fn read_file_part(&mut self, name: &str, offset: u64, len: u64) -> std::io::Result<Vec<u8>> {
-        self.0.borrow_mut().read_file_part(name, offset, len)
-    }
-
-    fn include(&self, name: &str) -> std::io::Result<fift::core::SourceBlock> {
-        self.0.borrow().include(name)
-    }
-}
-
-pub struct EnvHandle(Rc<RefCell<WasmEnvironment>>);
-
-impl EnvHandle {
-    fn borrow(&self) -> std::cell::Ref<'_, WasmEnvironment> {
-        self.0.borrow()
     }
 }

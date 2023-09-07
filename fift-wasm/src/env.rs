@@ -39,7 +39,7 @@ impl WasmEnvironment {
 
 impl fift::core::Environment for WasmEnvironment {
     fn now_ms(&self) -> u64 {
-        now_sec_u64()
+        now_ms_u64()
     }
 
     fn get_env(&self, _: &str) -> Option<String> {
@@ -135,18 +135,8 @@ fn map_js_err(error: JsValue) -> std::io::Error {
     }
 }
 
-#[cfg(all(target_arch = "wasm32", feature = "web"))]
-fn now_sec_u64() -> u64 {
-    (js_sys::Date::now() / 1000.0) as u64
-}
-
-#[cfg(not(all(target_arch = "wasm32", feature = "web")))]
-fn now_sec_u64() -> u64 {
-    use std::time::SystemTime;
-
-    (SystemTime::now().duration_since(SystemTime::UNIX_EPOCH))
-        .expect("shouldn't fail")
-        .as_secs()
+fn now_ms_u64() -> u64 {
+    js_sys::Date::now() as u64
 }
 
 fn not_found(name: &str) -> std::io::Error {
