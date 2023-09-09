@@ -202,9 +202,9 @@ dependencies = [
 
 [[package]]
 name = "everscale-types"
-version = "0.1.0-rc.3"
+version = "0.1.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19e943077b0dcdacb18a1840a12c77c5c690eec076f5db866594c80560bb2c00"
+checksum = "9f9fe5e76ca67107988faadaeb26d7e82a7b251ff3d343db4ee9acadcf1156cc"
 dependencies = [
  "ahash",
  "base64",
@@ -240,9 +240,9 @@ checksum = "d0870c84016d4b481be5c9f323c24f65e31e901ae618f0e80f4308fb00de1d2d"
 
 [[package]]
 name = "fift"
-version = "0.1.19"
+version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6d9cb2721604fc0568c16fc9245542eb19212171f9aeb0898f1584cb9e762e1"
+checksum = "2746f26f645cbd32687d38803811fce3f958b2655faf54c4d00c57eb211d8561"
 dependencies = [
  "ahash",
  "anyhow",
