@@ -240,9 +240,9 @@ checksum = "d0870c84016d4b481be5c9f323c24f65e31e901ae618f0e80f4308fb00de1d2d"
 
 [[package]]
 name = "fift"
-version = "0.1.18"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36021a592f08bfec5e1b55290ba42ed5d20718ce37c65d9c81b176181920e96f"
+checksum = "f6d9cb2721604fc0568c16fc9245542eb19212171f9aeb0898f1584cb9e762e1"
 dependencies = [
  "ahash",
  "anyhow",
@@ -264,9 +264,9 @@ dependencies = [
 
 [[package]]
 name = "fift-libs"
-version = "0.1.16"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87e0430ccdc9202e9b919fc9d83d974864779d05f8a860ea8089d8dc04ba8e1b"
+checksum = "41faef7b060ec7e926474c5f9ada435b78bbd76fc1368ed087006d420b759aef"
 
 [[package]]
 name = "fift-proc"
