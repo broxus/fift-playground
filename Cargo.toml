@@ -7,3 +7,8 @@ opt-level = 3
 lto = true
 codegen-units = 1
 # panic = "abort"
+
+[patch.crates-io]
+fift = { git = "https://github.com/broxus/fift.git", rev = "bbe3c35af660de1b76237236f7e369531e6aa4d8" }
+fift-libs = { git = "https://github.com/broxus/fift.git", rev = "bbe3c35af660de1b76237236f7e369531e6aa4d8" }
+tycho-vm = { git = "https://github.com/broxus/tycho-vm.git", rev = "f38b81afd069192f19377ef74dfe06022c652059" }

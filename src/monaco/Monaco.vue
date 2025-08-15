@@ -26,6 +26,7 @@ const props = withDefaults(
   defineProps<{
     filename: string
     value?: string
+    stderrRanges?: Uint32Array,
     readonly?: boolean
   }>(),
   { readonly: false }
@@ -42,6 +43,8 @@ const store = inject<Store>('store')!;
 const initPromise = initMonaco(store);
 
 const lang = computed(() => 'fift');
+
+let prevDecorations = null;
 
 onMounted(async () => {
   if (!containerRef.value) {
@@ -74,6 +77,26 @@ onMounted(async () => {
         return;
       }
       editorInstance.setValue(value || '');
+
+      const ranges = props.stderrRanges;
+      if (ranges != null) {
+        var items = [];
+        var model = editorInstance.getModel();
+        for (var i = 0; i < ranges.length; i += 2) {
+          const from = ranges[i];
+          const to = ranges[i + 1];
+          items.push({
+            range: monaco.Range.fromPositions(
+              model.getPositionAt(from),
+              model.getPositionAt(to)
+            ),
+            options: { inlineClassName: "stderr-line" },
+          });
+        }
+
+        prevDecorations = editorInstance.createDecorationsCollection(items);
+        console.log(prevDecorations);
+      }
     },
     { immediate: true },
   );
@@ -137,5 +160,9 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 100%;
   overflow: hidden;
+}
+
+.stderr-line {
+  color: var(--vscode-charts-green) !important;
 }
 </style>

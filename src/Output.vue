@@ -17,12 +17,18 @@ const ERR_TABS_FULL: Tab[] = ['stdout', 'stderr', 'backtrace'];
 type OutputState = {
   stdout: string;
   stderr: string;
+  stderrRanges: Uint32Array,
   backtrace: string[];
   exitCode?: number;
 };
 
 function makeDefaultState(): OutputState {
-  return { stdout: '', stderr: '', backtrace: [] };
+  return {
+    stdout: '',
+    stderr: '',
+    stderrRanges: new Uint32Array(),
+    backtrace: [],
+  };
 }
 
 const store = inject('store') as Store
@@ -75,6 +81,7 @@ watchEffect(() => {
     state.value.stdout = res.stdout;
     if (res.success == true) {
       state.value.exitCode = res.exitCode;
+      state.value.stderrRanges = res.stderrRanges;
       tabs.value = OK_TABS;
       selectedTab.value = 'stdout';
 
@@ -83,6 +90,7 @@ watchEffect(() => {
       }
     } else {
       state.value.stderr = res.stderr;
+      state.value.stderrRanges = new Uint32Array();
       tabs.value = res.backtrace != null ? ERR_TABS_FULL : ERR_TABS_SHORT;
       selectedTab.value = 'stderr';
 
@@ -122,7 +130,8 @@ watchEffect(() => {
   </div>
 
   <div class="output-container">
-    <Monaco class="stdout" v-show="selectedTab === 'stdout'" readonly filename="stdout" :value="state.stdout" />
+    <Monaco class="stdout" v-show="selectedTab === 'stdout'" readonly filename="stdout" :value="state.stdout"
+      :stderrRanges="state.stderrRanges" />
     <Monaco class="stderr" v-show="selectedTab === 'stderr'" readonly filename="stderr" :value="state.stderr" />
     <ol class="backtrace" v-show="selectedTab === 'backtrace'">
       <li v-for="item of state.backtrace">{{ item }}</li>

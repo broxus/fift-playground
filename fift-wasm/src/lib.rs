@@ -1,4 +1,5 @@
-use std::io::Write;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use fift::core::Environment;
 use wasm_bindgen::prelude::*;
@@ -11,7 +12,7 @@ mod util;
 
 #[wasm_bindgen(typescript_custom_section)]
 const TYPES: &str = r#"
-export type ExecutionOutput = { stdout: string } & (
+export type ExecutionOutput = { stdout: string, stderrRanges: Uint32Array } & (
     | {
         success: true;
         exitCode: number;
@@ -45,14 +46,16 @@ pub fn interpret(
     with_stdlib: bool,
 ) -> Result<ExecutionOutput, JsValue> {
     let mut env_writer = WasmEnvironment::new(files);
-    let mut output_writer = OutputWriter::default();
+    let output_writer = OutputWriter::default();
 
     let stdlib = with_stdlib
         .then(|| env_writer.include(fift_libs::base_lib().name))
         .transpose()
         .handle_error()?;
 
-    let mut context = fift::Context::new(&mut env_writer, &mut output_writer)
+    let mut stdin = output_writer.clone();
+    let mut stderr = output_writer.clone();
+    let mut context = fift::Context::new(&mut env_writer, &mut stdin, &mut stderr)
         .with_basic_modules()
         .handle_error()?
         .with_limits(fift::core::ExecutionLimits {
@@ -116,32 +119,63 @@ pub fn interpret(
             }
         }
     }
+    drop(context);
+
+    let stdout = String::from_utf8(std::mem::take(&mut *output_writer.writer.borrow_mut()))
+        .handle_error()?;
+
+    let stderr_ranges = std::mem::take(&mut *output_writer.stderr_ranges.borrow_mut());
+    drop(output_writer);
 
     Ok(output
+        .set("stdout", stdout)
         .set(
-            "stdout",
-            String::from_utf8(std::mem::take(&mut output_writer.0)).handle_error()?,
+            "stderrRanges",
+            js_sys::Uint32Array::from(stderr_ranges.as_slice()),
         )
         .build()
         .unchecked_into())
 }
 
-#[derive(Default)]
-pub struct OutputWriter(Vec<u8>);
+#[derive(Clone, Default)]
+pub struct OutputWriter {
+    writer: Rc<RefCell<Vec<u8>>>,
+    stderr_ranges: Rc<RefCell<Vec<u32>>>,
+}
 
-impl Write for OutputWriter {
+impl std::io::Write for OutputWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let len = buf.len();
-        self.0.extend_from_slice(buf);
+        self.writer.borrow_mut().extend_from_slice(buf);
         Ok(len)
     }
 
     fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
-        self.0.extend_from_slice(buf);
+        self.writer.borrow_mut().extend_from_slice(buf);
         Ok(())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl std::fmt::Write for OutputWriter {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        let byte_from;
+        let byte_to;
+        {
+            let mut writer = self.writer.borrow_mut();
+            byte_from = writer.len() as u32;
+            writer.extend_from_slice(s.as_bytes());
+            byte_to = writer.len() as u32;
+        }
+
+        {
+            let mut ranges = self.stderr_ranges.borrow_mut();
+            ranges.push(byte_from);
+            ranges.push(byte_to);
+        }
         Ok(())
     }
 }

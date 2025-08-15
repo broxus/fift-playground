@@ -116,22 +116,10 @@ impl fift::core::Environment for WasmEnvironment {
 }
 
 fn map_js_err(error: JsValue) -> std::io::Error {
-    #[derive(Debug)]
-    struct SomeJsError;
-
-    impl std::fmt::Display for SomeJsError {
-        #[inline]
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            std::fmt::Debug::fmt(self, f)
-        }
-    }
-
-    impl std::error::Error for SomeJsError {}
-
     if let Ok(error) = error.dyn_into::<js_sys::Error>() {
-        std::io::Error::new(std::io::ErrorKind::Other, JsError::from(error))
+        std::io::Error::other(JsError::from(error))
     } else {
-        std::io::Error::new(std::io::ErrorKind::Other, "JS error")
+        std::io::Error::other("JS error")
     }
 }
 
