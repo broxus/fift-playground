@@ -10,8 +10,8 @@ wasm-opt = ["-O3"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-fift = "0.1"
-fift-libs = "0.1"
+fift = "0.2"
+fift-libs = "0.2"
 getrandom = { version = "0.3", features = ["wasm_js"] }
 gloo-utils = { version = "0.2", default-features = false }
 js-sys = "0.3"

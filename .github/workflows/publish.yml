@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Set CNAME
-        run: echo 'fift.bytie.moe' > ./dist/CNAME
+        run: echo 'play.fift.rs' > ./dist/CNAME
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

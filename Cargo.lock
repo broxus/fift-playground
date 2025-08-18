@@ -35,9 +35,9 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bitflags"
-version = "2.9.1"
+version = "2.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
+checksum = "6a65b545ab31d687cff52899d4890855fec459eb6afe0da6417b8a18da87aa29"
 
 [[package]]
 name = "blake2"
@@ -204,8 +204,9 @@ checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
 
 [[package]]
 name = "fift"
-version = "0.1.23"
-source = "git+https://github.com/broxus/fift.git?rev=bbe3c35af660de1b76237236f7e369531e6aa4d8#bbe3c35af660de1b76237236f7e369531e6aa4d8"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d8d79c3367ca48235f52ece107e2ffd01041a5e086c9214139219cdeea6285c"
 dependencies = [
  "ahash",
  "anyhow",
@@ -229,13 +230,15 @@ dependencies = [
 
 [[package]]
 name = "fift-libs"
-version = "0.1.23"
-source = "git+https://github.com/broxus/fift.git?rev=bbe3c35af660de1b76237236f7e369531e6aa4d8#bbe3c35af660de1b76237236f7e369531e6aa4d8"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "734b6c1d8b14ef6a04a7797f0254cdc360996c4e08c706e295eec95f7ce4dc89"
 
 [[package]]
 name = "fift-proc"
-version = "0.1.15"
-source = "git+https://github.com/broxus/fift.git?rev=bbe3c35af660de1b76237236f7e369531e6aa4d8#bbe3c35af660de1b76237236f7e369531e6aa4d8"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ef2d8cd0ee71c56e7716cbe884bc777ede880126ead3bd80bb8dd2c1443785a"
 dependencies = [
  "darling",
  "quote",
@@ -430,9 +433,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.97"
+version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61789d7719defeb74ea5fe81f2fdfdbd28a803847077cecce2ff14e1472f6f1"
+checksum = "89ae43fd86e4158d6db51ad8e2b80f313af9cc74f5c0e03ccb87de09998732de"
 dependencies = [
  "unicode-ident",
 ]
@@ -504,9 +507,9 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "scc"
-version = "2.3.4"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22b2d775fb28f245817589471dd49c5edf64237f4a19d10ce9a92ff4651a27f4"
+checksum = "46e6f046b7fef48e2660c57ed794263155d713de679057f2d0c169bfc6e756cc"
 dependencies = [
  "sdd",
 ]
@@ -554,9 +557,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"
-version = "2.0.105"
+version = "2.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bc3fcb250e53458e712715cf74285c1f889686520d79294a9ef3bd7aa1fc619"
+checksum = "ede7c438028d4436d71104916910f5bb611972c5cfd7f89b8300a8186e6fada6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -565,18 +568,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.14"
+version = "2.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b0949c3a6c842cbde3f1686d6eea5a010516deb7085f79db747562d4102f41e"
+checksum = "80d76d3f064b981389ecb4b6b7f45a0bf9fdac1d5b9204c7bd6714fecc302850"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.14"
+version = "2.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc5b44b4ab9c2fdd0e0512e6bece8388e214c0749f5862b114cc5b7a25daf227"
+checksum = "44d29feb33e986b6ea906bd9c3559a856983f92371b3eaa5e83782a351623de0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -704,8 +707,9 @@ dependencies = [
 
 [[package]]
 name = "tycho-vm"
-version = "0.2.0"
-source = "git+https://github.com/broxus/tycho-vm.git?rev=f38b81afd069192f19377ef74dfe06022c652059#f38b81afd069192f19377ef74dfe06022c652059"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64b65d687d7f06dcb2645a3a3aa2a8bb6608cbbf55d01b230086898222294d0c"
 dependencies = [
  "ahash",
  "anyhow",
@@ -726,8 +730,9 @@ dependencies = [
 
 [[package]]
 name = "tycho-vm-proc"
-version = "0.2.0"
-source = "git+https://github.com/broxus/tycho-vm.git?rev=f38b81afd069192f19377ef74dfe06022c652059#f38b81afd069192f19377ef74dfe06022c652059"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3548fea44ef0cd0494084439572b2ece3e570f88e51d8b7aac95ea2b47706012"
 dependencies = [
  "darling",
  "proc-macro2",
